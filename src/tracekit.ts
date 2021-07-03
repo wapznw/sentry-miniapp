@@ -51,6 +51,7 @@ const winjs = /^\s*at (?:((?:\[object object\])?.+) )?\(?((?:file|ms-appx|https?
 const geckoEval = /(\S+) line (\d+)(?: > eval line \d+)* > eval/i;
 const chromeEval = /\((\S*)(?::(\d+))(?::(\d+))\)/;
 const miniapp = /^\s*at (\w.*) \((\w*.js):(\d*):(\d*)/i;
+const wxApp = /\s?at\s?(.*?)\s?\((.*?\.[a-z]+):(\d+):(\d+)\)/i
 
 /** JSDoc */
 export function computeStackTrace(ex: any): StackTrace {
@@ -72,7 +73,14 @@ export function computeStackTrace(ex: any): StackTrace {
   } catch (e) {
     // no-empty
   }
-
+  try {
+    stack = computeMiniProagramStackTraceFromStackProp(ex);
+    if (stack) {
+      return popFrames(stack, popSize);
+    }
+  } catch (e) {
+    // no-empty
+  }
   try {
     stack = computeStackTraceFromStackProp(ex);
     if (stack) {
@@ -88,6 +96,55 @@ export function computeStackTrace(ex: any): StackTrace {
     name: ex && ex.name,
     stack: [],
     failed: true,
+  };
+}
+
+function computeMiniProagramStackTraceFromStackProp(ex: any): StackTrace | null {
+  if (!ex || !ex.stack) {
+    return null;
+  }
+  const stack = [];
+  let parts: any;
+  let element: any;
+  let lines: Array<any>
+  try {
+    const message = extractMessage(ex)
+    if (~message.indexOf('MiniProgramError') || ~message.indexOf('app-service') || ~message.indexOf('WASubContext')) {
+      lines = message.split('\n')
+
+      for (let i = 0; i < lines.length; i++) {
+        if ((parts = wxApp.exec(lines[i]))) {
+          let url = parts[2]
+          if (url[0] !== '/' && url[0] !== 'h') {
+            url = '/' + url
+          }
+          element = {
+            url: url,
+            func: parts[1] || UNKNOWN_FUNCTION,
+            args: [],
+            line: parts[3] ? +parts[3] : null,
+            column: parts[4] ? +parts[4] : null,
+          };
+        }
+        else {
+          continue;
+        }
+        if (!element.func && element.line) {
+          element.func = UNKNOWN_FUNCTION;
+        }
+        stack.push(element);
+      }
+    }
+  } catch (e) { }
+
+  if (!stack.length) {
+    return null;
+  }
+
+  return {
+    message: extractMessage(ex),
+    name: ex.name,
+    stack: stack,
   };
 }
 
