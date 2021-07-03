@@ -74,7 +74,7 @@ export function computeStackTrace(ex: any): StackTrace {
     // no-empty
   }
   try {
-    stack = computeMiniProagramStackTraceFromStackProp(ex);
+    stack = computeMiniProgramStackTraceFromStackProp(ex);
     if (stack) {
       return popFrames(stack, popSize);
     }
@@ -99,21 +99,30 @@ export function computeStackTrace(ex: any): StackTrace {
   };
 }
 
-function computeMiniProagramStackTraceFromStackProp(ex: any): StackTrace | null {
+function isStack(str: string): boolean {
+  return ['MiniProgramError', 'app-service', 'WASubContext'].some(s => str.indexOf(s) > -1) || (str.indexOf('at') > -1 && str.indexOf(':') > -1)
+}
+
+function computeMiniProgramStackTraceFromStackProp(ex: any): StackTrace | null {
+
   if (!ex || !ex.stack) {
     return null;
   }
-  const stack = [];
+  const stack: StackFrame[] = [];
   let parts: any;
   let element: any;
-  let lines: Array<any>
+  let lines: any[]
   try {
-    const message = extractMessage(ex)
-    if (~message.indexOf('MiniProgramError') || ~message.indexOf('app-service') || ~message.indexOf('WASubContext')) {
-      lines = message.split('\n')
+    let message = extractMessage(ex)
+    if (!isStack(message)) {
+      message = ex.stack
+    }
 
+    if (isStack(message)) {
+      lines = message.split('\n')
       for (let i = 0; i < lines.length; i++) {
         if ((parts = wxApp.exec(lines[i]))) {
+          // console.log(lines[i], parts);
           let url = parts[2]
           if (url[0] !== '/' && url[0] !== 'h') {
             url = '/' + url
@@ -125,8 +134,7 @@ function computeMiniProagramStackTraceFromStackProp(ex: any): StackTrace | null 
             line: parts[3] ? +parts[3] : null,
             column: parts[4] ? +parts[4] : null,
           };
-        }
-        else {
+        } else {
           continue;
         }
         if (!element.func && element.line) {
@@ -135,7 +143,9 @@ function computeMiniProagramStackTraceFromStackProp(ex: any): StackTrace | null 
         stack.push(element);
       }
     }
-  } catch (e) { }
+  } catch (e) {
+    // empty
+  }
 
   if (!stack.length) {
     return null;
