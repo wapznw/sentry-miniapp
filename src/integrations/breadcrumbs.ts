@@ -228,6 +228,7 @@ export class Breadcrumbs implements Integration {
 
         requestOptions.success = (res: any) => {
           fetchData.status_code = res.statusCode;
+          let data = res && typeof res.data === 'string' ? (res.data?.length > 128 ? res.data?.substr(0, 128) + '...' : res.data) : null;
           Breadcrumbs.addBreadcrumb(
             {
               category: 'request',
@@ -236,7 +237,7 @@ export class Breadcrumbs implements Integration {
                 response: {
                   ...res,
                   header: fillKeys(res.header, this._options.request?.filterHeaders || []),
-                  data: res.data.length < 128 ? res.data : res.data.substr(0, 128) + '...',
+                  data,
                 },
               },
               type: 'http',
