@@ -1,8 +1,10 @@
 export {
   Breadcrumb,
+  BreadcrumbHint,
   Request,
   SdkInfo,
   Event,
+  EventHint,
   Exception,
   Response,
   Severity,
@@ -10,8 +12,8 @@ export {
   Stacktrace,
   Status,
   Thread,
-  User
-} from "@sentry/types";
+  User,
+} from '@sentry/types';
 
 export {
   addGlobalEventProcessor,
@@ -23,15 +25,17 @@ export {
   getHubFromCarrier,
   getCurrentHub,
   Hub,
+  makeMain,
   Scope,
+  startTransaction,
   setContext,
   setExtra,
   setExtras,
   setTag,
   setTags,
   setUser,
-  withScope
-} from "@sentry/core";
+  withScope,
+} from '@sentry/core';
 
 export { SDK_NAME, SDK_VERSION } from "./version";
 export {

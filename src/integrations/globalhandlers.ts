@@ -140,7 +140,7 @@ export class GlobalHandlers implements Integration {
 
         currentHub.setTag("pagenotfound", url);
         currentHub.setExtra("message", JSON.stringify(res));
-        currentHub.captureMessage(`页面无法找到: ${url}`);
+        currentHub.captureException(new Error(`页面无法找到: ${url}`));
       });
     }
 
