@@ -235,7 +235,6 @@ export class Breadcrumbs implements Integration {
               data: {
                 ...fetchData,
                 response: {
-                  ...res,
                   header: fillKeys(res.header, this._options.request?.filterHeaders || []),
                   data,
                 },
